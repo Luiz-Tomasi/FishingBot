@@ -3,6 +3,8 @@ import random
 from time import sleep
 import my_keyboard
 import keyboard
+import cv2
+import numpy as np
 
 FISHING_POSITIONS = [(909, 196)]
 IMG_BUBBLE_SIZE = (120, 120)
@@ -26,27 +28,43 @@ def wait_bubble(fishing_position):
       my_keyboard.press('caps')
       break
 
+def find_fish(image_path, screenshot):
+    fish_template = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    result = cv2.matchTemplate(screenshot, fish_template, cv2.TM_CCOEFF_NORMED)
+    _, max_val, _, max_loc = cv2.minMaxLoc(result)
+
+    confidence_threshold = 0.65
+    if max_val >= confidence_threshold:
+        return max_loc
+    return None
+
 def minigame():
   sleep(0.2)
   my_keyboard.key_down(0x39)
   my_keyboard.release_key(0x39)
   fish = True
   while fish !=None:
+    try :
+      # Tirar screenshot da região do minijogo
+      screenshot = pyautogui.screenshot(region=MINIGAME_REGION)
+      screenshot = cv2.cvtColor(np.array(screenshot), cv2.COLOR_BGR2GRAY)
+
+      fish = find_fish('peixe.png', screenshot)
+    except Exception as e:
+       fish = None
+       print(f"Peixe detectado em {fish}")
+
     try:
       bar = pyautogui.locateOnScreen('barra.png', confidence=0.8, region=MINIGAME_REGION)
     except pyautogui.ImageNotFoundException:
       bar = None
 
-    try:
-      fish = pyautogui.locateOnScreen('peixe.png', confidence=0.8, grayscale=True)
-    except pyautogui.ImageNotFoundException:
-      fish = None
 
-    print(f"Barra: { bar } ")
-    print(f"Mini-peixe detectado: { fish }")
 
     if bar is not None and fish is not None:
-      if fish.top + 50 < bar.top + 50:
+      print(f"Barra: { bar } ")
+      print(f"Mini-peixe detectado: { fish[1] }")
+      if fish[1] + 50 < bar.top + 50:
         print("Pressionando tecla...")
         my_keyboard.key_down(0x39)
       else:
