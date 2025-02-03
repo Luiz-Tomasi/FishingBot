@@ -125,12 +125,22 @@ def attack():
     sleep(0.2)
     my_keyboard.press(attack)
 
+def isHungry():
+    screenshot = pyautogui.screenshot(region=MINIGAME_REGION)
+    screenshot_cv2 = cv2.cvtColor(np.array(screenshot), cv2.COLOR_BGR2GRAY)
+
+    # Detectar barra e peixe
+    isHungry = find_fish('fome.png', screenshot_cv2)
+    if isHungry != None:
+       my_keyboard.press('F11')
+
 keyboard.wait('h')
 while True:
   print('Iniciando pesca')
   fishing_position = set_fishing_rod()
   wait_bubble(fishing_position)
   minigame()
+  isHungry()
   attack()
   sleep(7)
   my_keyboard.press('F12')
