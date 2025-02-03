@@ -38,45 +38,77 @@ def find_fish(image_path, screenshot):
         return max_loc
     return None
 
+def find_bar(image_path, screenshot):
+    bar_template = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    result = cv2.matchTemplate(screenshot, bar_template, cv2.TM_CCOEFF_NORMED)
+    _, max_val, _, max_loc = cv2.minMaxLoc(result)
+
+    confidence_threshold = 0.65
+    if max_val >= confidence_threshold:
+        return max_loc
+    return None
+
 def minigame():
-  sleep(0.2)
-  my_keyboard.key_down(0x39)
-  my_keyboard.release_key(0x39)
-  fish = True
-  while fish !=None:
-    try :
-      # Tirar screenshot da região do minijogo
-      screenshot = pyautogui.screenshot(region=MINIGAME_REGION)
-      screenshot = cv2.cvtColor(np.array(screenshot), cv2.COLOR_BGR2GRAY)
+    sleep(0.2)
+    my_keyboard.key_down(0x39)  # Pressiona a tecla no início
+    my_keyboard.release_key(0x39)
 
-      fish = find_fish('peixe.png', screenshot)
-    except Exception as e:
-       fish = None
-       print(f"Peixe detectado em {fish}")
+    fish_location = None
+    bar_location = None
+    no_detection_count = 0  # Contador de falhas consecutivas na detecção
+    estado = 0
+    while no_detection_count < 50:  # Define o limite para considerar o fim do minigame
+        try:
+            
+            screenshot = pyautogui.screenshot(region=MINIGAME_REGION)
+            screenshot_cv2 = cv2.cvtColor(np.array(screenshot), cv2.COLOR_BGR2GRAY)
 
-    try:
-      bar = pyautogui.locateOnScreen('barra.png', confidence=0.8, region=MINIGAME_REGION)
-    except pyautogui.ImageNotFoundException:
-      bar = None
+            # Detectar barra e peixe
+            new_fish_location = find_fish('peixe.png', screenshot_cv2)
+            new_bar_location = find_bar('barra.png', screenshot_cv2)
 
+            if new_fish_location:
+                fish_location = new_fish_location
+            if new_bar_location:
+                bar_location = new_bar_location
 
+            if fish_location and bar_location:
+                no_detection_count = 0  # Resetar contador se ambos forem encontrados
 
-    if bar is not None and fish is not None:
-      print(f"Barra: { bar } ")
-      print(f"Mini-peixe detectado: { fish[1] }")
-      if fish[1] + 50 < bar.top + 50:
-        print("Pressionando tecla...")
-        my_keyboard.key_down(0x39)
-      else:
-        print("Soltando tecla...")
-        my_keyboard.release_key(0x39)
-    else:
-      print("Nenhum dos dois detectados, mantendo tecla pressionada brevemente...")
-      my_keyboard.key_down(0x39)
+                fish_y = fish_location[1]
+                bar_y = bar_location[1]
 
-    if bar is None and fish is None:
-      print("Não tem minigame")
-      break
+                print(f"Posição do peixe: {fish_y}, Posição da barra: {bar_y}")
+
+                if fish_y < bar_y:  # Peixe acima
+                    if estado == 1:
+                        no_detection_count += 1
+                    else:
+                        no_detection_count = 0
+                    estado = 1
+                    print("⬆️ Peixe acima, pressionando tecla...")
+                    my_keyboard.key_down(0x39)
+                elif fish_y > bar_y + 35:  # Peixe abaixo
+                    if estado == 2:
+                        no_detection_count += 1
+                    else:
+                        no_detection_count = 0
+                    estado = 2
+                    print("⬇️ Peixe abaixo, soltando tecla...")
+                    my_keyboard.release_key(0x39)
+                else:
+                    print("✅ Peixe dentro da área da barra, mantendo estado atual.")
+            else:
+                no_detection_count += 1  # Incrementar contador de falhas
+                print(f"⚠️ Detecção falhou ({no_detection_count}/50). Verificando novamente...")
+
+        except Exception as e:
+            print(f"Erro no minigame: {e}")
+            break
+
+    print("🎣 Minigame encerrado. Continuando...")
+    my_keyboard.release_key(0x39)  # Garantir que a tecla é liberada no fim
+
 
 def attack():
   my_attacks = ['f5', 'f6', 'f7', 'f8', 'F9']
@@ -91,5 +123,5 @@ while True:
   wait_bubble(fishing_position)
   minigame()
   attack()
-  sleep(5)
+  sleep(2.3)
   my_keyboard.press('F12')
