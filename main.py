@@ -57,7 +57,8 @@ def minigame():
     bar_location = None
     no_detection_count = 0  # Contador de falhas consecutivas na detecção
     estado = 0
-    while no_detection_count < 50:  # Define o limite para considerar o fim do minigame
+    estados_repetindo_count = 0
+    while no_detection_count < 50 and estados_repetindo_count < 80:  # Define o limite para considerar o fim do minigame
         try:
             
             screenshot = pyautogui.screenshot(region=MINIGAME_REGION)
@@ -82,17 +83,19 @@ def minigame():
 
                 if fish_y < bar_y:  # Peixe acima
                     if estado == 1:
-                        no_detection_count += 1
+                        estados_repetindo_count += 1
+                        print(f"estado adicionado. Atual: {estados_repetindo_count}")
                     else:
-                        no_detection_count = 0
+                        estados_repetindo_count = 0
                     estado = 1
                     print("⬆️ Peixe acima, pressionando tecla...")
                     my_keyboard.key_down(0x39)
                 elif fish_y > bar_y + 35:  # Peixe abaixo
                     if estado == 2:
-                        no_detection_count += 1
+                        estados_repetindo_count += 1
+                        print(f"estado adicionado. Atual: {estados_repetindo_count}")
                     else:
-                        no_detection_count = 0
+                        estados_repetindo_count = 0
                     estado = 2
                     print("⬇️ Peixe abaixo, soltando tecla...")
                     my_keyboard.release_key(0x39)
