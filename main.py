@@ -100,6 +100,12 @@ def minigame():
                     print("⬇️ Peixe abaixo, soltando tecla...")
                     my_keyboard.release_key(0x39)
                 else:
+                    if estado == 3:
+                        estados_repetindo_count += 1
+                        print(f"estado adicionado. Atual: {estados_repetindo_count}")
+                    else:
+                        estados_repetindo_count = 0
+                    estado = 3
                     print("✅ Peixe dentro da área da barra, mantendo estado atual.")
             else:
                 no_detection_count += 1  # Incrementar contador de falhas
@@ -114,7 +120,7 @@ def minigame():
 
 
 def attack():
-  my_attacks = ['f5', 'f6', 'f7', 'f8', 'F9']
+  my_attacks = ['f4','f5', 'f6', 'f7', 'f8', 'F9']
   for attack in my_attacks:
     sleep(0.2)
     my_keyboard.press(attack)
@@ -126,5 +132,5 @@ while True:
   wait_bubble(fishing_position)
   minigame()
   attack()
-  sleep(2.3)
+  sleep(7)
   my_keyboard.press('F12')
